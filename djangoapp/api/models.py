@@ -34,4 +34,4 @@ class Document(models.Model):
         Returns:
             str: The UUID and title of the document.
         """
-        return f"{self.id} {self.title}"
+        return f'{self.id}'
