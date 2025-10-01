@@ -29,3 +29,11 @@ class FileSerializer(serializers.Serializer):
         Update and return an existing `Document` instance, given the validated data.
         """
         pass
+
+class DocumentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Document model, exposing id, title, and file fields.
+    """
+    class Meta:
+        model = Document
+        fields = ['id', 'title', 'file']

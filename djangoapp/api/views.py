@@ -8,10 +8,12 @@ authenticated file uploads using Django REST Framework.
 from drf_spectacular.utils import extend_schema
 
 from rest_framework import status, permissions
+from rest_framework.generics import RetrieveAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .serializers import FileSerializer
+from api.serializers import FileSerializer, DocumentSerializer
+from api.models import Document
 
 class UploadFile(APIView):
     """
@@ -44,3 +46,24 @@ class UploadFile(APIView):
             serializer.save()
             return Response("success", status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DocumentDetail(RetrieveAPIView):
+    """
+    RetrieveAPIView for fetching a single Document instance
+    belonging to the authenticated user.
+    """
+
+    serializer_class = DocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = 'id'
+
+    def get_queryset(self):
+        """
+        Returns a queryset of Document instances
+        that belong to the currently authenticated user.
+
+        Returns:
+            QuerySet: Filtered Document queryset
+        """
+        return Document.objects.filter(user=self.request.user)
+
