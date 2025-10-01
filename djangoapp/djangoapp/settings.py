@@ -29,8 +29,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = list(os.getenv('ALLOWED_HOSTS'))
+# Read allowed origins and split by comma
+origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
 
+# Optional: strip whitespace from each origin
+ALLOWED_HOSTS = [origin.strip() for origin in origins if origin.strip()]
 
 # Application definition
 
@@ -81,8 +84,12 @@ WSGI_APPLICATION = 'djangoapp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'documents'),
+        'USER': os.getenv('DB_USER', 'user'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'password'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': '5432',
     }
 }
 

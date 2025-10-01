@@ -21,7 +21,7 @@ class Document(models.Model):
         file (FileField): File associated with the document, stored under 'Documents/'.
         created_at (datetime): Timestamp when the document was created.
     """
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text="Unique identifier for the document.")
+    ids = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, help_text="Unique identifier for the document.")
     user= models.ForeignKey(User, related_name='document', on_delete=models.CASCADE)
     title = models.CharField(max_length=200, null=False)
     file = models.FileField(upload_to='Documents', null=False)
@@ -34,4 +34,4 @@ class Document(models.Model):
         Returns:
             str: The UUID and title of the document.
         """
-        return f'{self.id}'
+        return f'{self.ids}'

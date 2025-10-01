@@ -38,7 +38,7 @@ class DocumentSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Document
-        fields = ['id', 'title', 'file']
+        fields = ['ids', 'title', 'file']
 
 class ChatInputSerializer(serializers.Serializer):
     """

@@ -11,7 +11,7 @@ from api import views
 
 urlpatterns = [
     path("upload/", views.UploadFile.as_view(), name="file-upload"),
-    path('documents/<uuid:id>', views.DocumentDetail.as_view(), name='document-detail'),
+    path('documents/<uuid:ids>', views.DocumentDetail.as_view(), name='document-detail'),
     path('chat/', views.ChatWithDocument.as_view(), name="chat-with-document"),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

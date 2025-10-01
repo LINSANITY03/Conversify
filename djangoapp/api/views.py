@@ -4,7 +4,8 @@ Views for file upload API.
 This module defines API endpoints for handling
 authenticated file uploads using Django REST Framework.
 """
-
+from django.conf import settings
+from django.core.files.storage import default_storage
 from drf_spectacular.utils import extend_schema
 
 from rest_framework import status, permissions
@@ -18,6 +19,7 @@ from api.models import Document
 
 import os
 import requests
+import uuid
 
 from dotenv import load_dotenv
 
@@ -64,7 +66,7 @@ class DocumentDetail(RetrieveAPIView):
 
     serializer_class = DocumentSerializer
     permission_classes = [permissions.IsAuthenticated]
-    lookup_field = 'id'
+    lookup_field = 'ids'
 
     def get_queryset(self):
         """
@@ -106,22 +108,41 @@ class ChatWithDocument(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            document = Document.objects.get(id=serializer.validated_data['document_id'])
+            document = Document.objects.get(ids=serializer.validated_data['document_id'])
         except Document.DoesNotExist:
             return Response({"error": "Document not found."}, status=status.HTTP_404_NOT_FOUND)
         
         if request.user != document.user:
             return Response({"error": "User not matched."}, status=status.HTTP_401_UNAUTHORIZED)
         
-        # user_audio = serializer.validated_data.get('audio')
+        user_audio = serializer.validated_data.get('audio')
         user_text = serializer.validated_data.get('text')
+
         # Prioritize audio: transcribe if audio present
-        
-        # Prepare payload for n8n webhook
-        payload = {
-            "document_url": document.file.url,
-            "user_query": user_text,
-        }
+        if user_audio:
+            # Generate a unique filename to avoid collisions
+            ext = os.path.splitext(user_audio.name)[1]  # e.g. ".mp3"
+            unique_filename = f"{uuid.uuid4().hex}{ext}"
+
+            # Save file to MEDIA_ROOT/uploads/
+            relative_path = default_storage.save(
+                os.path.join('uploads', unique_filename),
+                user_audio
+            )
+
+            # Build absolute URL to the uploaded file
+            audio_url = request.build_absolute_uri(settings.MEDIA_URL + relative_path)
+
+            # Prepare payload for n8n webhook   
+            payload = {
+                "document_url": document.file.url,
+                "user_query": audio_url,
+            }
+        else:
+            payload = {
+                "document_url": document.file.url,
+                "user_query": user_text,
+            }
         
         try:
             resp = requests.post(os.getenv('PIPELINE_URL'), json=payload)
