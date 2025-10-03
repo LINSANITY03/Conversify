@@ -46,13 +46,10 @@ class ChatInputSerializer(serializers.Serializer):
 
     This serializer validates the incoming data for the chat API, ensuring that:
     - A valid UUID is provided for `document_id`.
-    - At least one of `text` or `audio` is provided (audio file or non-empty text).
-    - `text` is optional but if provided can be blank.
-    - `audio` is optional and can be null.
+    - `audio` is provided (audio file ).
 
     Fields:
         document_id (UUIDField): The UUID of the document to interact with.
-        text (CharField): Optional user text input; can be blank.
         audio (FileField): Optional audio file input; can be null.
 
     Methods:
@@ -64,13 +61,11 @@ class ChatInputSerializer(serializers.Serializer):
     """
     document_id = serializers.UUIDField()
     text = serializers.CharField(required=False, allow_blank=True)
-    audio = serializers.FileField(required=False, allow_null=True)
 
     def validate(self, attrs):
-        text = attrs.get('text')
         audio = attrs.get('audio')
 
-        if not audio and (not text or text.strip() == ''):
-            raise serializers.ValidationError("Either audio file or non-empty text must be provided.")
+        if not audio:
+            raise serializers.ValidationError("audio file must be provided.")
 
         return attrs

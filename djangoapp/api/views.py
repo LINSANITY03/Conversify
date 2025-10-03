@@ -6,11 +6,12 @@ authenticated file uploads using Django REST Framework.
 """
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.http import FileResponse
 from drf_spectacular.utils import extend_schema
 
 from rest_framework import status, permissions
 from rest_framework.generics import RetrieveAPIView
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -116,32 +117,22 @@ class ChatWithDocument(APIView):
             return Response({"error": "User not matched."}, status=status.HTTP_401_UNAUTHORIZED)
         
         user_audio = serializer.validated_data.get('audio')
-        user_text = serializer.validated_data.get('text')
 
-        # Prioritize audio: transcribe if audio present
         if user_audio:
             # Generate a unique filename to avoid collisions
             ext = os.path.splitext(user_audio.name)[1]  # e.g. ".mp3"
             unique_filename = f"{uuid.uuid4().hex}{ext}"
 
             # Save file to MEDIA_ROOT/uploads/
-            relative_path = default_storage.save(
+            default_storage.save(
                 os.path.join('uploads', unique_filename),
                 user_audio
             )
 
-            # Build absolute URL to the uploaded file
-            audio_url = request.build_absolute_uri(settings.MEDIA_URL + relative_path)
-
             # Prepare payload for n8n webhook   
             payload = {
                 "document_url": document.file.url,
-                "user_query": audio_url,
-            }
-        else:
-            payload = {
-                "document_url": document.file.url,
-                "user_query": user_text,
+                "user_query": unique_filename,
             }
         
         try:
@@ -152,3 +143,41 @@ class ChatWithDocument(APIView):
 
         # Optionally return whatever n8n returns
         return Response({"n8n_response": resp.json()})
+
+class StreamAudioFromUrl(APIView):
+    """
+    API view to stream an audio file from the server's media storage.
+
+    This view handles GET requests and streams the requested audio file
+    if it exists in the 'uploads' directory under MEDIA_ROOT. If the file
+    does not exist, it returns a 404 error response.
+
+    Attributes:
+        permission_classes (list): Permissions allowed for this view (AllowAny).
+        serializer_class: Not used in this view (set to None).
+    """
+    permission_classes = [permissions.AllowAny]
+    serializer_class = None
+
+    def get(self, request, filename):
+        """
+        Handles GET requests to stream an audio file by filename.
+
+        Args:
+            request (Request): The HTTP request object.
+            filename (str): The name of the audio file to stream.
+
+        Returns:
+            FileResponse: Streaming response containing the audio file with MIME type 'audio/mpeg',
+                          if the file exists.
+            Response: JSON error response with status 404 if the file is not found.
+        """
+        
+        # Construct full file path
+        audio_url = os.path.join(settings.MEDIA_ROOT, 'uploads', filename)
+
+        if not os.path.exists(audio_url):
+            return Response({"error": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Stream the file
+        return FileResponse(open(audio_url, 'rb'), content_type='audio/mpeg')

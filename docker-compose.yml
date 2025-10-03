@@ -7,13 +7,15 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
       - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
-      - N8N_HOST=localhost
+      - N8N_HOST=n8n
       - N8N_PORT=5678
-      - WEBHOOK_URL=${PIPELINE_URL}
+      - WEBHOOK_URL=http://n8n:5678
     volumes:
       - ./n8n_data:/home/node/.n8n
     env_file:
       - .env
+    networks:
+      - backend
   
   speech_recognition:
     container_name: speech_recognition
@@ -22,6 +24,10 @@ services:
       - 8001:8001
     depends_on:
       - n8n
+    env_file:
+      - .env
+    networks:
+      - backend
   
   restapi:
     container_name: restapi
@@ -38,6 +44,8 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_HOST=postgres
       - DEBUG=true
+    volumes:
+    - ./media:/djangoapp/media
     command: >
       sh -c "./wait-for-it.sh postgres:5432 -- 
              python manage.py makemigrations &&
@@ -45,6 +53,8 @@ services:
              python manage.py runserver 0.0.0.0:8000"
     env_file:
       - .env
+    networks:
+      - backend
   
   postgres:
     image: postgres
@@ -57,6 +67,12 @@ services:
       - 5432:5432
     volumes:
       - conversify_postgres:/var/lib/postgresql/data
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   conversify_postgres:
