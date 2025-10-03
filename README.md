@@ -10,7 +10,7 @@ The core idea is to turn static documents into interactive knowledge sources.
 - Content Extraction: Parse and extract relevant information from uploaded files.
 - Language Detection & Translation: Identify document language and translate to English for consistency.
 - Conversational Interface: Ask questions about the document in English, with continuous conversation support.
-- Multimodal Input (future): Start with text input; expand to audio queries later.
+- Multimodal Input (future): Start with audio input; expand to text queries later.
 - Download Chat History: Export conversations for offline use.
 - Scalable Microservices: Separate services for file management and AI workloads, enabling independent scaling.
 
@@ -43,10 +43,10 @@ n8n for chaining tasks like:
 ## Roadmap
 
 - ✅ File upload API (Django DRF)
-- 🔄 Document storage & metadata association
-- 🔲 Content parsing service (FastAPI + PyTorch)
-- 🔲 LLM-based chat with documents
-- 🔲 Translation & language detection
+- ✅ Document storage & metadata association
+- ✅ Content parsing service (FastAPI + PyTorch)
+- 🔄 LLM-based chat with documents
+- ✅ Translation & language detection
 - 🔲 Continuous conversation with memory (vector DB integration)
 - 🔲 Audio input support
 - 🔲 Downloadable chat logs
